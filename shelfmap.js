@@ -1,4 +1,4 @@
-javascript
+
 (function () {
   var DEFAULT_MAP = 'https://yourlibrary.libguides.com/ez/stacks-default.png';
 
