@@ -1,41 +1,50 @@
 
 (function () {
-  var DEFAULT_MAP = 'https://yourlibrary.libguides.com/ez/stacks-default.png';
+  'use strict';
 
-  // Edit these: LC class letters, number range, map image URL (from Springshare)
-  var RANGES = [
-    { cls: 'Q',  from: 1,    to: 999,  map: 'https://.../stacks-q.png' },
-    { cls: 'PQ', from: 1,    to: 3999, map: 'https://.../stacks-pq-a.png' },
-    { cls: 'PQ', from: 4000, to: 9999, map: 'https://.../stacks-pq-b.png' },
-    { cls: 'PR', from: 1,    to: 9999, map: 'https://.../stacks-pr.png' }
-  ];
+  console.log('Shelf map script loaded');
 
-  function parse(t) {
-    var m = t.match(/^\s*([A-Z]{1,3})\s*(\d+(?:\.\d+)?)/i);
-    return m ? { cls: m[1].toUpperCase(), num: parseFloat(m[2]) } : null;
-  }
+  var mapURL =
+    'https://libguides.hofstra.edu/ld.php?content_id=59791517';
 
-  function mapFor(cn) {
-    for (var i = 0; i < RANGES.length; i++) {
-      var r = RANGES[i];
-      if (r.cls === cn.cls && cn.num >= r.from && cn.num <= r.to) return r.map;
-    }
-    return DEFAULT_MAP;
-  }
+  function updateLinks() {
+    document.querySelectorAll('a.shelfmap').forEach(function (link) {
+      var row = link.closest('tr');
+      if (!row) return;
 
-  function update() {
-    document.querySelectorAll('a.shelfmap:not([data-done])').forEach(function (a) {
-      var sel = '[data-testid$="callNumberWithCopy"]';
-      var row = a.closest('tr');
-      var cell = (row && row.querySelector(sel)) || document.querySelector(sel);
+      var cell = row.querySelector(
+        '[data-testid$="callNumberWithCopy"]'
+      );
       if (!cell) return;
-      var cn = parse(cell.innerText || '');
-      if (!cn) return;
-      a.href = mapFor(cn);
-      a.dataset.done = '1';
+
+      var callNumber = cell.textContent.trim();
+      var match = callNumber.match(/^([A-Z]{1,3})\s*\d/i);
+      if (!match) return;
+
+      var firstLetter = match[1].toUpperCase().charAt(0);
+
+      if (firstLetter >= 'A' && firstLetter <= 'E') {
+        if (link.getAttribute('href') !== mapURL) {
+          link.setAttribute('href', mapURL);
+          console.log('Shelf map updated:', callNumber);
+        }
+      }
     });
   }
 
-  new MutationObserver(update).observe(document.body, { childList: true, subtree: true });
-  update();
+  function start() {
+    updateLinks();
+
+    new MutationObserver(updateLinks).observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
 })();
